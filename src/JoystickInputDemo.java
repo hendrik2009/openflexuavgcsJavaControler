@@ -57,11 +57,11 @@ import at.wisch.joystick.test.*;
  */
 public class JoystickInputDemo implements ControllerEventListener{
 
-	private static JoystickInputDemo jsInputDemo;
-
+	private static JoystickInputDemo jsInputDemo;	
 	private static ArrayList<Joystick> joysticks;
 	private static Joystick joystick;
 	
+	public float[] controller_array;
 	
 	//MAIN
 	/**
@@ -97,8 +97,9 @@ public class JoystickInputDemo implements ControllerEventListener{
 		try {
 			JoystickManager.init();
 			joysticks = JoystickManager.getAllJoysticks(); // all joysticks
+		
+			
 			joystick = JoystickManager.getJoystick(); // get the first Joystick
-
 		} catch (FFJoystickException e) {
 			e.printErrorMessage();
 		}
@@ -188,12 +189,40 @@ public class JoystickInputDemo implements ControllerEventListener{
 	 */
 	@Override
 	public void controllerEventOccured(AdvancedControllerEvent event) {
-		
+		//System.out.println("WAS GEHT");
 		// we simply output it. but there are different classes of Events - 
 		// we could also distinguish between them and do more advanced stuff.
-		System.out.println(event);
+		//System.out.println(event);
+		parseEvent( event );
 		
-
+	}
+	private void parseEvent(AdvancedControllerEvent e){
+		/**Should write the updates in the controler_array
+		 *  no switches neccessary... ofset and write to array
+		 */
+		
+		
+		if(e.isAxis()){
+			switch(e.getControlIndex()){
+			case 0: System.out.println("x");
+					System.out.println(e.AXIS);
+				break;
+			case 1: //System.out.println("y");
+				break;
+			case 2: //System.out.println("z");
+				break;
+			case 3: //System.out.println("throttle");
+				break;
+			}
+		}
+		else if(e.isButton()){
+			switch(e.getControlIndex()){
+			case 0: //System.out.println("button0");
+				break; 
+			case 1: //System.out.println("button1");
+				break;
+			}
+		}
 	}
 
 }

@@ -437,9 +437,10 @@ public class JoystickTest extends JFrame implements ControllerEventListener, Fea
 					+axes
 					+povs
 					+"Buttons: "+buttons+"</html>");
-
+			
 			//update the state every X ms -> sleep for some time
 			try {
+				System.out.println("tick");
 				Thread.sleep(100); //X
 			} catch (InterruptedException e) {
 				e.printStackTrace();
