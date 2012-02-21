@@ -10,44 +10,33 @@ import at.wisch.joystick.test.*;
 
 public class JoystickDataProvider implements ControllerEventListener {
 	
-	public static ArrayList<Joystick> joysticks;
-	public static Joystick joystick;
+	private static ArrayList<Joystick> joysticks;
+	private static Joystick joystick;
 	
-	public float[] controler_array;
+	// buffered Joystickdata 
+	// supports 4 axis [0]-[3] x y z rx
+	// and up to 20 Buttons [4]-[23]
+	// called buttons will only by reset to 0 after external read
+	private float[] controller_array;
 	
-	// aufesetzen eines reading loops fŸr die Joystick inputs
-		// finde alle Joysticks
-		// connect to PS3 Controller if available
-		// connect to MS Sidewinder if available
-		// connect to any JS if Available
-		// THROW ERROR IF NO Controller
+
 	
-		//check if controller
-			// Set up Data array
-			// add Listener
-			// on update write new value to Array
+//////// ------------- MEMO --------------------
+/*
+	Maps for specific joysticks -> x => y axis btn1 => btn12 etc.
+*/
+////////------------- MEMO --------------------
 	
-	
-	
-	// Public function fŸr den read Data request von aussen
-		// return Data Array or null for connection lost
 	
 	//CONSTRUCTOR
-	public JoystickDataProvider(String jsName){
-		System.out.println("Constructor Called??");
-		
-		controler_array 		= new float[50];
-
+	public JoystickDataProvider(String jsName){		
+		controller_array 		= new float[24];
 		// init and get-joystick methods have to be done within a try-catch-block
 		// (these are fatal errors and we need to deal with them)
 		try {
 			JoystickManager.init();
-			joysticks = JoystickManager.getAllJoysticks(); // all joysticks
-			
-			// search for suiting joystick
-			
-			joystick = JoystickManager.getJoystick(); // get the first Joystick
-
+			joysticks = JoystickManager.getAllJoysticks(); // all joysticks		
+			joystick = JoystickManager.getJoystick(); // get the first Joystick		
 		} catch (FFJoystickException e) {
 			e.printErrorMessage();
 		}
@@ -57,53 +46,44 @@ public class JoystickDataProvider implements ControllerEventListener {
 		}
 	}
 	
-	public String getTester(){
-		return "Jup";
-	}
-	
 	// Neseccary interface override ->
 	public void controllerEventOccured( AdvancedControllerEvent Evt ){
-		//System.out.println("WAS GEHT");
-		// we simply output it. but there are different classes of Events - 
-		// we could also distinguish between them and do more advanced stuff.
-		//System.out.println(event);
 		parseEvent( Evt );
-		
 	}
+	
+	/** catching Event data and writing changes into controller_array
+	 * @param e :AdvancedControllerEvent 
+	 */
 	private void parseEvent(AdvancedControllerEvent e){
-		/**Should write the updates in the controler_array
+		/**Should write the updates in the controller_array
 		 *  no switches neccessary... ofset and write to array
 		 */
 		if(e.isAxis()){
 			//controller_array[e.getControlIndex()] = e.value;
 			
 			// Event associated Value
-			controler_array[e.getControlIndex()]   =	e.getSource().getAxisValue(e.getControlIndex());
-			
-			/*switch(e.getControlIndex()){
-			case 0: System.out.println("x");
-					System.out.println(e.AXIS);
-				break;
-			case 1: //System.out.println("y");
-				break;
-			case 2: //System.out.println("z");
-				break;
-			case 3: //System.out.println("throttle");
-				break;
-			}*/
+			int index = e.getControlIndex();
+			if(index < 4){
+				controller_array[index]   =	e.getSource().getAxisValue(index);
+			}
 		}
 		else if(e.isButton()){
-			switch(e.getControlIndex()){
-			case 0: //System.out.println("button0");
-				break; 
-			case 1: //System.out.println("button1");
-				break;
+			int index = e.getControlIndex();
+			if(e.getSource().isButtonPressed(index)){
+				controller_array[index+4]   = 1;
 			}
 		}
 	}
-	
 	public float[] getJsData(){
-		return controler_array;
+		float[] outPut 	= controller_array.clone();
+		int index 		= 0;
+		for(float item : controller_array){
+			if(index > 3){
+				controller_array[index] = 0;
+			}
+			index++;
+		}
+		return outPut;
 	}
 	
 }// class
