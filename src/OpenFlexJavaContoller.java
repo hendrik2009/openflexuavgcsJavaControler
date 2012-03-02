@@ -1,4 +1,17 @@
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
+import java.awt.image.RescaleOp;
+import java.util.Timer;
+import java.util.TimerTask;
+
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+
+import sample.ARDroneTest;
 
 import com.shigeodayo.ardrone.ARDrone;
 import com.shigeodayo.ardrone.navdata.AttitudeListener;
@@ -11,11 +24,14 @@ import com.shigeodayo.ardrone.video.ImageListener;
 import at.wisch.joystick.event.ControllerEventManager;
 import helpers.JoystickDataProvider;
 
-public class OpenFlexJavaContoller {
+public class OpenFlexJavaContoller extends JFrame {
 
-	private static JoystickDataProvider _jsDataProvider;
-	private static ARDrone _drone;
-	private static boolean _is_flying;
+
+	public static JoystickDataProvider _jsDataProvider;
+	public static ARDrone _drone;
+	public static boolean _is_flying;
+	
+	private MyPanel myPanel;
 	
 	/**
 	 * 
@@ -37,9 +53,49 @@ public class OpenFlexJavaContoller {
 	 * @param arg
 	 */
 	public static void main(String[] arg){
-		
-		
-		
+		SwingUtilities.invokeLater(new Runnable(){
+			@Override
+			public void run() {
+				System.out.println("Preinit");
+				final OpenFlexJavaContoller thisClass = new OpenFlexJavaContoller();
+				
+				thisClass.addWindowListener(new WindowAdapter(){
+					@Override
+					public void windowOpened(WindowEvent e) {
+						System.out.println("WindowOpened");
+					}
+					@Override
+					public void windowClosing(WindowEvent e) {
+						//thisClass.dispose();
+					}
+				});
+				thisClass.setVisible(true);
+				
+				// Controlldata Loop pulling Data every 100 ms to set NavigationCommand 
+				Timer timer = new Timer();
+				timer.scheduleAtFixedRate(new TimerTask() {
+			        public void run() {
+			        	try {
+							Thread.sleep(100); // check once every second -> wait 100ms
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+							}
+						System.out.println("tick");
+						thisClass.navigateByDirectControl( _jsDataProvider.getJsData() );
+						System.out.println("");
+			        }
+			    }, 0, 100);
+			}
+		});
+	};
+	
+	// Constructor
+	public OpenFlexJavaContoller(){
+		System.out.println("Controller");
+		this.initController();
+	}
+	
+	public void initController(){	
 		// Connecting to Joystick
 		_jsDataProvider 			= new JoystickDataProvider("");
 		ControllerEventManager.addControllerEventListener( _jsDataProvider );
@@ -59,10 +115,10 @@ public class OpenFlexJavaContoller {
 		_drone.addImageUpdateListener(new ImageListener(){
 			@Override
 			public void imageUpdated(BufferedImage image) {
-				/*if(myPanel!=null){
+				if(myPanel!=null){
 					myPanel.setImage(image);
 					myPanel.repaint();
-				}*/
+				}
 			}
 		});
 		
@@ -93,31 +149,17 @@ public class OpenFlexJavaContoller {
 				//System.out.println("vx: "+vx+", vy: "+vy+", vz: "+vz);
 			}
 		});
+		this.setTitle("ardrone");
+		this.setSize(640, 480);
+		this.add(getMyPanel());
 		
 		
-		// Controlldata Loop pulling Data every 1000 ms to set NavigationCommand 
-		do {
-			
-			try {
-				Thread.sleep(100); // check once every second -> wait 100ms
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-				}
-			System.out.println("tick");
-			navigateByDirectControl( _jsDataProvider.getJsData() );
-				
-			System.out.println("tickEND");
-			System.out.println("");
-					//_jsDataProvider.getJsData()[0]);
-		} while (true );
 	}
 	
-	// Constructor
-	public void OpenFlexJavaControler(String[] arg){
-		
-	}
+	
 	
 	static void navigateByDirectControl(float[] jsData){
+		System.out.println("New Joydata");
 		float factor	= 50;
 		
 		
@@ -201,6 +243,41 @@ public class OpenFlexJavaContoller {
 			System.out.println("land");
 			_is_flying		= false;
 			_drone.landing();
+		}
+	}
+	
+	private JPanel getMyPanel(){
+		if(myPanel==null){
+			myPanel=new MyPanel();
+		}
+		return myPanel;
+	}
+	
+	/**
+	 * •`‰æ—p‚Ìƒpƒlƒ‹
+	 * @author shigeo
+	 *
+	 */
+	private class MyPanel extends JPanel{
+		private static final long serialVersionUID = -7635284252404123776L;
+
+		/** ardrone video image */
+		private BufferedImage image=null;
+		
+		public void setImage(BufferedImage image){
+			// Brighten the image by 30%
+			float scaleFactor = 1.3f;
+			RescaleOp op = new RescaleOp(scaleFactor, 0, null);
+			image = op.filter(image, null);
+			this.image=image;
+		}
+		
+		public void paint(Graphics g){
+			g.setColor(Color.white);
+			g.fillRect(0, 0, this.getWidth(), this.getHeight());
+			if(image!=null)
+				g.drawImage(image, 0, 0,640,480,null); //image.getWidth(), image.getHeight(), null);
+			
 		}
 	}
 }
