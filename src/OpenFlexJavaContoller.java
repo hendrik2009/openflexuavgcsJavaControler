@@ -11,6 +11,8 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
+import processing.core.PApplet;
+
 import sample.ARDroneTest;
 
 import com.shigeodayo.ardrone.ARDrone;
@@ -21,6 +23,7 @@ import com.shigeodayo.ardrone.navdata.StateListener;
 import com.shigeodayo.ardrone.navdata.VelocityListener;
 import com.shigeodayo.ardrone.video.ImageListener;
 
+import SimpleOpenNI.SimpleOpenNI;
 import at.wisch.joystick.event.ControllerEventManager;
 import helpers.JoystickDataProvider;
 
@@ -28,10 +31,12 @@ public class OpenFlexJavaContoller extends JFrame {
 
 
 	public static JoystickDataProvider _jsDataProvider;
+	
 	public static ARDrone _drone;
 	public static boolean _is_flying;
-	
 	private MyPanel myPanel;
+	
+	public static SimpleOpenNI _kinect; 
 	
 	/**
 	 * 
@@ -75,11 +80,7 @@ public class OpenFlexJavaContoller extends JFrame {
 				Timer timer = new Timer();
 				timer.scheduleAtFixedRate(new TimerTask() {
 			        public void run() {
-			        	try {
-							Thread.sleep(100); // check once every second -> wait 100ms
-						} catch (InterruptedException e) {
-							e.printStackTrace();
-							}
+			        	
 						System.out.println("tick");
 						thisClass.navigateByDirectControl( _jsDataProvider.getJsData() );
 						System.out.println("");
@@ -96,11 +97,11 @@ public class OpenFlexJavaContoller extends JFrame {
 	}
 	
 	public void initController(){	
-		// Connecting to Joystick
+	// Connecting to Joystick
 		_jsDataProvider 			= new JoystickDataProvider("");
 		ControllerEventManager.addControllerEventListener( _jsDataProvider );
 		
-		//connecting Drone
+	//connecting Drone
 		_drone 						= new ARDrone("192.168.1.1");
 		System.out.println("connect drone controller");
 		_drone.connect();
@@ -149,11 +150,15 @@ public class OpenFlexJavaContoller extends JFrame {
 				//System.out.println("vx: "+vx+", vy: "+vy+", vz: "+vz);
 			}
 		});
+	// Connecting Kinect
+		PApplet	helpApplet 	= new PApplet();
+		_kinect				= new SimpleOpenNI(helpApplet);
+		
+		
+		// Window for Video
 		this.setTitle("ardrone");
 		this.setSize(640, 480);
 		this.add(getMyPanel());
-		
-		
 	}
 	
 	
