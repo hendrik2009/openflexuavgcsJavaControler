@@ -13,17 +13,19 @@ import javax.swing.JPanel;
 public class KinectData extends PApplet {
 	private static final long serialVersionUID = 1L;
 
+	private final String TRACKING 			= "track"; 
+	private final String SET_BG 			= "bgupdate";
 	
 	SimpleOpenNI context;
-	double        zoomF =0.3f;
+	double        zoomF =0.24f;
 	float        rotX = radians(180);  // by default rotate the hole scene 180deg around the x-axis, 
 	                                   // the data from openni comes upside down
 	float        rotY = radians(0);
 	
 	BufferedImage image;
 	//------
-	PVector[] basicWorldMap;
-	PVector[] lowPathMap;
+	PVector[] currentWorldMap;
+	PVector[] bgMap  = new PVector[ 307200 ];
 	boolean init    = true;
 	float   dnorm    = 			1000;
 	float   dmin     =			999999;
@@ -35,6 +37,8 @@ public class KinectData extends PApplet {
 	boolean drawBG 	  =false;
 	//-----
 	
+	String mode		= SET_BG;
+	
 	ColorDetector detective	;
 	int[] memRect ={0,0,0,0}; 
 
@@ -42,12 +46,13 @@ public class KinectData extends PApplet {
 	{
 		frameRate(60);
 		 
-		size(512,384,P3D);
+		size(640,480,P3D);
 	   //context = new SimpleOpenNI(this,SimpleOpenNI.RUN_MODE_SINGLE_THREADED);
 		context = new SimpleOpenNI(this);
 
 	  // disable mirror
 		context.setMirror(true);
+	  // enable RGB Image
 		context.enableRGB();
 	  // enable depthMap generation 
 		context.enableDepth();
@@ -58,6 +63,7 @@ public class KinectData extends PApplet {
 	  	detective = new ColorDetector(640,480); 
 	}
 
+	@SuppressWarnings("deprecation")
 	public void draw()
 	{
 	  // update the cam
@@ -75,64 +81,108 @@ public class KinectData extends PApplet {
 	  
 	  // draws Video Image
 	  PImage rgbImage = context.rgbImage();
-	  if(rgbImage!= null){
-		  this.image(rgbImage,-320,-240);
-	  	// if an image is available search for a red point
+	  if(mode==TRACKING){
+		  trackRedObject(rgbImage);
+	  }
+	  else if(mode==SET_BG){
+		  currentWorldMap 	= context.depthMapRealWorld();
+		  
+		  int it = 0;
+		  while(it< bgMap.length){
+			  PVector mem = currentWorldMap[it];
+			  bgMap[it] = new PVector(mem.x,mem.y,mem.z);
+			  it++;
+		  }
+		  
+		  System.out.print(it);System.out.println(" - BG was reset");
+		  mode = TRACKING;
+	  }
 	  
-	  
-	  	// load img data
-	 	rgbImage.loadPixels();
-	 	int[] pixArray;
-	 	pixArray 	= rgbImage.pixels;
-	 		
-	 	// return of search is a redpoint or (-1,-1)
-	 	int[] redPoint =	detective.detectRed(pixArray);
-	  	this.image(rgbImage,-320, -240);
-	  	basicWorldMap 	= context.depthMapRealWorld();
-	  	
-	  	
-	  	//Draw Active area
-	  	ArrayList<Integer> dont	= new ArrayList(); 
-	  	if(redPoint[0]>0 && redPoint[1]>0){
-	  		rect(-320 + redPoint[0], -240 + redPoint[1],10,10);	 	
-	  		
-	  		int range = 50;
-			for(int y= -range; y<range ; y++){
-				for(int x = -range; x<range; x++){
-					int realX = redPoint[0]-x;
-					int realY = redPoint[1]-y;
-					
-					// checking for meaningfull positions
-					realX = (realX > 0)? (realX < 639)? realX : 639  : 0;
-					realY = (realY > 0)? (realY < 479)? realY : 479  : 0;
-					
-					int c	  = realY*640 + realX;
-					PVector realWorldPoint = basicWorldMap[c];
-					stroke(255,0 ,0);
-					dont.add(c);
-					point(realWorldPoint.x,realWorldPoint.y,realWorldPoint.z);
-				};
-			};
-		 };
-		 /*
-		 int i=0;
-		 while(i<basicWorldMap.length){
-			 PVector realWorldPoint = basicWorldMap[i];
-			 stroke(realWorldPoint.mag());
-			 if(dont.indexOf(i)<0){
-				 point(realWorldPoint.x,realWorldPoint.y,realWorldPoint.z);
-			 }
-			 i++;
-		 }*/
-	  }; 
 	}//draw function
 
+	public void trackRedObject(PImage rgbImage){
+		// if an image is available search for a red point  
+		if(rgbImage!= null){
+			
+			// drawing the rgbImage
+			 this.image(rgbImage,-320,-240);
+		  	
+		  	// load img data
+		 	//rgbImage.loadPixels();
+		 	int[] pixArray;
+		 	pixArray 	= rgbImage.pixels;
+		 		
+		 	// return of search is a point or (-1,-1)
+		 	int[] redPoint =	detective.detectRed(pixArray);
+		  	this.image(rgbImage,-320, -240);
+		  	currentWorldMap 	= context.depthMapRealWorld();
+		  	
+		  	//Draw Active area
+
+		  	int[] vectorApproximation = {0,0,0,0};
+		  	if(redPoint[0]>0 && redPoint[1]>0){
+		  		rect(-320 + redPoint[0], -240 + redPoint[1],10,10);	 	
+		  		
+		  		int range = 50;
+				for(int y= -range; y<range ; y++){
+					for(int x = -range; x<range; x++){
+						int realX = redPoint[0]-x;
+						int realY = redPoint[1]-y;
+						
+						// checking for meaningfull positions
+						realX = (realX > 0)? (realX < 639)? realX : 639  : 0;
+						realY = (realY > 0)? (realY < 479)? realY : 479  : 0;
+						
+						int c	  = realY*640 + realX;
+						PVector realWorldPoint = currentWorldMap[c];
+						PVector offSetPoint    = bgMap[c];
+						stroke(255,0 ,0);
+						if(realWorldPoint.dist(offSetPoint) > 40 ){
+							
+							// relative zum boden
+							/*
+							vectorApproximation[0] += (realWorldPoint.x - offSetPoint.x);
+							vectorApproximation[1] += (realWorldPoint.y - offSetPoint.y);
+							vectorApproximation[2] += (realWorldPoint.z - offSetPoint.z);
+							vectorApproximation[3]++;*/
+							vectorApproximation[0] += (realWorldPoint.x );
+							vectorApproximation[1] += (realWorldPoint.y );
+							vectorApproximation[2] += (realWorldPoint.z );
+							vectorApproximation[3]++;
+							
+							point(realWorldPoint.x,realWorldPoint.y,realWorldPoint.z);
+						};
+						/*if(x == 0){
+							System.out.print("in1:"); System.out.print(realWorldPoint.x); 
+							System.out.print(" in2:");System.out.print(offSetPoint.x);
+							System.out.print(" out:"); System.out.print(vectorApproximation[0]);
+						};*/
+						
+					};
+				};
+			 };
+			 System.out.print(vectorApproximation[0]);System.out.print("--");System.out.print(vectorApproximation[3]);System.out.print("  ");
+			 if(vectorApproximation[3]!=0){
+				 vectorApproximation[0] = vectorApproximation[0] /vectorApproximation[3];
+				 vectorApproximation[1] = vectorApproximation[1] /vectorApproximation[3];
+				 vectorApproximation[2] = vectorApproximation[2] /vectorApproximation[3];
+			 };
+			 System.out.print("X:");System.out.print(vectorApproximation[0]);System.out.print("Y:");System.out.print(vectorApproximation[1]);System.out.print("Z:");System.out.println(vectorApproximation[2]);
+			 translate(vectorApproximation[0],vectorApproximation[1],vectorApproximation[2] );
+			 stroke(255);
+			 fill(0x00ff00);
+			 box(20);
+			
+		  };
+	}
+	
+	// Camera movement via key control
 	public void keyPressed()
 	{
 	  switch(key)
 	  {
 	  case ' ':
-	    context.setMirror(!context.mirror());
+	    mode 	= SET_BG;
 	    break;
 	  }
 

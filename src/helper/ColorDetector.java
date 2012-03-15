@@ -13,17 +13,47 @@ public class ColorDetector {
 	private static int 	_height;
 	public static int[] _rect			= {0,0,0,0};
 	
+	/**
+	 * Constructor ColorDetect </br>
+	 * Width and Height define the image size to compute linear Array positions to X|Y coordinates 
+	 * 
+	 * @param width Imagewidth
+	 * @param height Imageheight
+	 */
 	public ColorDetector(int width, int height){
+		// init height and width for row and column count 
 		_width 		= width;
 		_height 	= height;
 	}
+	/** public int[] detectRed </br>
+	 * Returns a point where the approximate center of red is in the image. (assuming there is a red object to track)
+	 * 
+	 * @param pixels Array of pixels
+	 * @param rect	a rectangle that defines the search area [x,y,width,height]
+	 * @return the tracked point [x,y] (related to init width and height)
+	 */
 	public int[] detectRed(int[] pixels, int[] rect){
 		return ColorDetector.searchRed(pixels, rect);
 	}
+	/**
+	 * public int[] detectRed </br>
+	 * Returns a point where the approximate center of red is in the image. (assuming there is a red object to track)
+	 * 
+	 * @param pixels
+	 * @return the tracked point [x,y] (related to init width and height)
+	 */
 	public int[] detectRed(int[] pixels){
 		int[] rect ={0,0,_width,_height};
 		return ColorDetector.searchRed(pixels, rect);
 	}
+	
+	/**
+	 * Internal iterator that goes through the pixel array
+	 * 
+	 * @param pixels int[] ARGB pixels
+	 * @param rect	int[] Search Area [x,y,width,height]
+	 * @return point int [] Approximation of redspot center [x,y]
+	 */
 	private static int[] searchRed(int[] pixels, int[] rect){
 		
 		int inx1				= rect[0];
@@ -58,7 +88,7 @@ public class ColorDetector {
 			    	lastWasRed = true;
 			    }
 			    else{
-			    	pixels[c] = (int) ( (0xbb) << 24 +( (pixels[c] >> 16) & 0xff << 16 ) + ( ( (pixels[c] >> 8) & 0xff)<< 8 ) + (pixels[c]) & 0xff  ) ;
+			    	//pixels[c] = (int) ( (0xbb) << 24 +( (pixels[c] >> 16) & 0xff << 16 ) + ( ( (pixels[c] >> 8) & 0xff)<< 8 ) + (pixels[c]) & 0xff  ) ;
 			    	lastWasRed = false;
 			    }
 			}
@@ -70,6 +100,13 @@ public class ColorDetector {
 		}
 		return targetCoor; 
 	}
+	
+	/**public static int checkPixel</br>
+	 * Checks a pixel to be red or not.
+	 * 
+	 * @param pixel int given ARGB Pixel 
+	 * @return int - 0 if is not red / else color of pixel
+	 */
 	public static int checkPixel(int pixel) {
 	    int alpha = (pixel >> 24) & 0xff;
 	    int red = (pixel >> 16) & 0xff;
