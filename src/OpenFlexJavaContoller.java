@@ -1,3 +1,5 @@
+import iadZhdk.dakaX.DakaX;
+
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.event.WindowAdapter;
@@ -12,6 +14,7 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
 import processing.core.PApplet;
+import processing.core.PVector;
 
 import sample.ARDroneTest;
 
@@ -29,14 +32,60 @@ import helpers.JoystickDataProvider;
 
 public class OpenFlexJavaContoller extends JFrame {
 
-
+//Joystick inputs
 	public static JoystickDataProvider _jsDataProvider;
 	
+// Ar Drone Controller
 	public static ARDrone _drone;
 	public static boolean _is_flying;
 	private MyPanel myPanel;
 	
-	public static SimpleOpenNI _kinect; 
+// Kinect	
+	public static KinectData _kinectData	= new KinectData();
+	
+// DakaX
+	public static DakaXController _dakaX	= new DakaXController();
+	
+/*
+ * Physical Controller
+ * 	- JS
+ * 	- AR Drone
+ * 	- DakaX
+ * 	- Kinect
+ * 
+ * Create movement generator:
+ * 		-> Joystick input // last control override 
+ * 		-> PathController
+ * 		<- Ar Drone moves
+ * 		<- camera moves
+ * 
+ * Create Positioning Controller
+ * 		-> DakaX rotData
+ * 		-> ArDrone posData
+ * 		<- PosData Paket (V;Rot;Pos)
+ * 
+ * Create PathController
+ * 		-> PosData
+ * 		-> Flightpath Vector
+ * 		<- current move Vector
+ * 
+ * Create FlightpathController
+ * 		-> Flightplan
+ * 		-> Timeline
+ * 
+ * !!Create Flex interface
+ * 		-> UI inputs
+ * 		<- VideoData
+ * 		<- PosData
+ * 		<- Enviromentmap
+ * 		<- StatusData
+ * 
+ * Navmapper Rasterized flight command presets? 
+ * Space restrictions
+ * 
+ * 
+ * 
+ */
 	
 	/**
 	 * 
@@ -58,6 +107,12 @@ public class OpenFlexJavaContoller extends JFrame {
 	 * @param arg
 	 */
 	public static void main(String[] arg){
+		
+		// starts Kinect
+		_kinectData.main(new String[] {"KinectData" });
+		
+		_dakaX.main(new String[] {"DakaXController"});
+		System.out.print("invokeSecond");
 		SwingUtilities.invokeLater(new Runnable(){
 			@Override
 			public void run() {
@@ -80,12 +135,10 @@ public class OpenFlexJavaContoller extends JFrame {
 				Timer timer = new Timer();
 				timer.scheduleAtFixedRate(new TimerTask() {
 			        public void run() {
-			        	
-						System.out.println("tick");
 						thisClass.navigateByDirectControl( _jsDataProvider.getJsData() );
-						System.out.println("");
 			        }
 			    }, 0, 100);
+				
 			}
 		});
 	};
@@ -93,10 +146,10 @@ public class OpenFlexJavaContoller extends JFrame {
 	// Constructor
 	public OpenFlexJavaContoller(){
 		System.out.println("Controller");
-		this.initController();
+		this.initControllers();
 	}
 	
-	public void initController(){	
+	public void initControllers(){	
 	// Connecting to Joystick
 		_jsDataProvider 			= new JoystickDataProvider("");
 		ControllerEventManager.addControllerEventListener( _jsDataProvider );
@@ -150,10 +203,9 @@ public class OpenFlexJavaContoller extends JFrame {
 				//System.out.println("vx: "+vx+", vy: "+vy+", vz: "+vz);
 			}
 		});
-	// Connecting Kinect
-		PApplet	helpApplet 	= new PApplet();
-		_kinect				= new SimpleOpenNI(helpApplet);
+
 		
+		System.out.print("Kinect init end");
 		
 		// Window for Video
 		this.setTitle("ardrone");
@@ -164,7 +216,6 @@ public class OpenFlexJavaContoller extends JFrame {
 	
 	
 	static void navigateByDirectControl(float[] jsData){
-		System.out.println("New Joydata");
 		float factor	= 50;
 		
 		
