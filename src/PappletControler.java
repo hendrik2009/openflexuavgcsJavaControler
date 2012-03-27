@@ -22,15 +22,16 @@ public class PappletControler extends PApplet {
 		
 	public void setup(){
 		
-		this.frameRate(30);
+		this.frameRate(25);
 		 
 		this.size(800,600,P3D);
+		
 		if(this.frame != null){
 			this.frame.setResizable(true);
 		}
+		
 		this.stroke(255,255,255);
-		this.smooth();
-		//this.perspective(radians(45), width/height,10,150000);
+		//this.smooth();
 		
 		_liveStream = new PImage();
 		
@@ -39,55 +40,39 @@ public class PappletControler extends PApplet {
 		
 		SimpleOpenNI.start();
 		
-		//_kinect 		= new KinectData(this);
-		//this.add(_kinect);
+		_kinect 		= new KinectData(this,2);
+		this.add(_kinect);
 		
 	}
 	public void draw(){
+		
 		// clear BG
 		background(0,0,0);
 		
 		_dakaX.draw();
 		
-		pushMatrix();
+		pushMatrix();	//----------- PUSH MAT
 		  
-		  translate(width/2, height/2, 0);
+		  translate(width/2, height/2, - _kinect.DISTANCE/2);
+
 		  rotateX(_rotX);
 		  rotateY(_rotY);
 		  scale((float)_zoomF);
-		  translate(0,0,-1900);  // set the rotation center of the scene 1000 infront of the camera
 		
-		  //_kinect.draw();
-		  drawScene(_kinect);
+		  _kinect.draw();
+
 		
-		popMatrix();
+		popMatrix();	//----------- POP MAT
 		
-		drawUI();
+		// Drone Image 
+		this.image(_liveStream,240,240);
 	}
 
-	
-	private void drawScene(KinectData inKinect){
-		 
-	}
-	private void drawUI(){
-		this.image(_liveStream,240,240);
-	/*	if(_liveStream != null ){
-			
-			
-			System.out.println(_liveStream.height);
-			this.background(0);
-			this.pushMatrix();
-			this.rotateX(this.radians(180));
-			this.image(_liveStream, 0, 0);
-			this.popMatrix();
-			
-		}*/
-	}
 	
 	public void setVideoImg( PImage img){
 		if(img != null){
 			_liveStream = new PImage( img.getImage() );
-			}
+		}
 	}
 	
 	// Key control

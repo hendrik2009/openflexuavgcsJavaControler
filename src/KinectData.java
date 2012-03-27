@@ -76,21 +76,21 @@ public class KinectData extends PApplet {
 		  for(int i=0;i<strList.size();i++)
 		    println(i + ":" + strList.get(i));
 
-		_context1 = new SimpleOpenNI(0,_parent);		
+		_context1 = new SimpleOpenNI(0,_parent);
+		_context2 = new SimpleOpenNI(1,_parent);
+		
 	  // disable mirror
 		_context1.setMirror(false);
+		_context2.setMirror(false);
+		
 	  // enable RGB Image
 		_context1.enableRGB();
+		_context2.enableRGB();
+		
 	  // enable depthMap generation 
 		_context1.enableDepth();
+		_context2.enableDepth();
 		
-		if(_kinectCount >1){
-			_context2 = new SimpleOpenNI(1,_parent);
-			_context2.setMirror(false);
-			_context2.enableRGB();
-			_context2.enableDepth();
-		}
-
 	  // Creates a color tracker
 	  	detective = new ColorDetector(640,480); 
 	  	System.out.println("KinectData::Setup - complete");
@@ -101,12 +101,9 @@ public class KinectData extends PApplet {
 	{
 	  // update the cameras !! if its only one call update on instance if it is two call static updateAll on SimpleOpenNI
 	
-		if(_kinectCount >1){
-			SimpleOpenNI.updateAll();
-		}
-		else{
-			_context1.update();
-		}
+
+	  SimpleOpenNI.updateAll();
+		
 		
 	  // Scene Build starts
 	  _parent.pushMatrix();//a
@@ -145,39 +142,12 @@ public class KinectData extends PApplet {
 			  it++;
 		  }
 	  }
-	  
-	  _parent.pushMatrix();	
-	  _parent.translate(currentPos1[0],currentPos1[1],currentPos1[2]);
-	  _parent.stroke(255);
-	  _parent.fill(0, 255, 0, 255);
-		
-	  _parent.beginShape(QUAD_STRIP);
-	  _parent.vertex(150, 0, 0);
-	  _parent.vertex(0, 25, 0);
-	  _parent.vertex(0,0,25);
-	 	
-	  _parent.vertex(150, 0, 0);
-	  _parent.vertex(0, -25, 0);
-	  _parent.vertex(0,0,25);
-	 	
-	  _parent.vertex(150, 0, 0);
-	  _parent.vertex(0, -25, 0);
-	  _parent.vertex(0,0,-25);
+	   drawTrackingIndicator(currentPos1[0],currentPos1[1],currentPos1[2]);
 	 
-	  _parent.vertex(150, 0, 0);
-	  _parent.vertex(0, 25, 0);
-	  _parent.vertex(0,0,-25);
-	 
-	  _parent.vertex(150, 0, 0);
-	  _parent.vertex(0, 25, 0);
-	  _parent.vertex(0,0,-25);
-	  _parent.endShape();
-	  _parent.popMatrix();
 	  
 	  _parent.popMatrix();//aEnd
-
 	  
-	  _parent.pushMatrix();//b
+	  _parent.pushMatrix();
 	  
 	  //3d distance Kinect1 to Kinect2
 	  _parent.translate(0, -HEIGHT, DISTANCE);
@@ -191,7 +161,7 @@ public class KinectData extends PApplet {
 	  
 	  PImage rgbImage1 = _context2.rgbImage();
 		 
-	   _context2.drawCamFrustum();
+	  _context2.drawCamFrustum();
 	   
 		  // Start Tracking
 		  if(mode==TRACKING){
@@ -210,6 +180,7 @@ public class KinectData extends PApplet {
 			  mode = TRACKING;
 		  }
 		  else if(mode == DRAW_ALL){
+			  println("thats it?");
 			  // Draws tracked and BG points
 			  trackRedObject(rgbImage1,_context2,2);
 			  _parent.stroke(160);  
@@ -221,36 +192,10 @@ public class KinectData extends PApplet {
 				  it++;
 			  }
 		  }
-		  _parent.pushMatrix();	
-			  _parent.translate(currentPos2[0],currentPos2[1],currentPos2[2]);
-			  _parent.stroke(255);
-			  _parent.fill(255,0 , 0, 255);
-				
-			  _parent.beginShape(QUAD_STRIP);
-			  _parent.vertex(150, 0, 0);
-			  _parent.vertex(0, 25, 0);
-			  _parent.vertex(0,0,25);
-			 	
-			  _parent.vertex(150, 0, 0);
-			  _parent.vertex(0, -25, 0);
-			  _parent.vertex(0,0,25);
-			 	
-			  _parent.vertex(150, 0, 0);
-			  _parent.vertex(0, -25, 0);
-			  _parent.vertex(0,0,-25);
-			 
-			  _parent.vertex(150, 0, 0);
-			  _parent.vertex(0, 25, 0);
-			  _parent.vertex(0,0,-25);
-			 
-			  _parent.vertex(150, 0, 0);
-			  _parent.vertex(0, 25, 0);
-			  _parent.vertex(0,0,-25);
-			  _parent.endShape();
-		  _parent.popMatrix();
+		  drawTrackingIndicator(currentPos2[0],currentPos2[1],currentPos2[2]);
+		  _parent.popMatrix();//bEnd  	 
 		  
-	  _parent.popMatrix();//bEnd
-	 
+	  // Final Position approx
 	  if(currentPos1[0]!=-1 && currentPos2[0]!=-1){
 		  PVector v1 = new PVector(currentPos1[0],currentPos1[1],currentPos1[2]);
 		  PVector v2 = new PVector(currentPos2[0],currentPos2[1],currentPos2[2]);
@@ -266,6 +211,7 @@ public class KinectData extends PApplet {
 		  
 	  }
 	  
+	  println("Draw");
 	}//draw function
 
 	public void trackRedObject(PImage rgbImage, SimpleOpenNI inKinect, int nr){
@@ -281,8 +227,8 @@ public class KinectData extends PApplet {
 		 	
 		 	// drawing the rgbImage
  			_parent.pushMatrix();
- 			_parent.rotateX(_parent.radians(180));
- 			_parent.image(rgbImage,-320,-240);
+ 			  _parent.rotateX(_parent.radians(180));
+ 		 	  _parent.image(rgbImage,-320,-240);
  		  	_parent.popMatrix();
  		  	
 		  	if(nr==1){
@@ -321,7 +267,9 @@ public class KinectData extends PApplet {
 							 realWorldPoint = _currentWorldMap2[c];
 							 offSetPoint    = _bgMap2[c];
 						}
-							_parent.stroke(255,0 ,0);
+						
+						
+						_parent.stroke(255,0 ,0);
 						double curLength = realWorldPoint.mag();
 						double offLength = offSetPoint.mag();
 						
@@ -370,6 +318,37 @@ public class KinectData extends PApplet {
 			 }
 			 
 		  };
+	}
+	
+	public void drawTrackingIndicator(float x, float y, float z){
+		 _parent.pushMatrix();	
+		  _parent.translate(x,y,z);
+		  _parent.stroke(255);
+		  _parent.fill(255,0 , 0, 255);
+			
+		  _parent.beginShape(QUAD_STRIP);
+		  _parent.vertex(150, 0, 0);
+		  _parent.vertex(0, 25, 0);
+		  _parent.vertex(0,0,25);
+		 	
+		  _parent.vertex(150, 0, 0);
+		  _parent.vertex(0, -25, 0);
+		  _parent.vertex(0,0,25);
+		 	
+		  _parent.vertex(150, 0, 0);
+		  _parent.vertex(0, -25, 0);
+		  _parent.vertex(0,0,-25);
+		 
+		  _parent.vertex(150, 0, 0);
+		  _parent.vertex(0, 25, 0);
+		  _parent.vertex(0,0,-25);
+		 
+		  _parent.vertex(150, 0, 0);
+		  _parent.vertex(0, 25, 0);
+		  _parent.vertex(0,0,-25);
+		  _parent.endShape();
+	  _parent.popMatrix();	
+	
 	}
 	
 	public void setMode(int inMode ){
