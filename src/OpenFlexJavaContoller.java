@@ -1,50 +1,28 @@
-import iadZhdk.dakaX.DakaX;
+import helpers.JoystickDataProvider;
 
-import java.awt.Color;
-import java.awt.Graphics;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.awt.image.BufferedImage;
-import java.awt.image.RescaleOp;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
-
 import processing.core.PApplet;
-import processing.core.PVector;
-
-import sample.ARDroneTest;
-
-import com.shigeodayo.ardrone.ARDrone;
-import com.shigeodayo.ardrone.navdata.AttitudeListener;
-import com.shigeodayo.ardrone.navdata.BatteryListener;
-import com.shigeodayo.ardrone.navdata.DroneState;
-import com.shigeodayo.ardrone.navdata.StateListener;
-import com.shigeodayo.ardrone.navdata.VelocityListener;
-import com.shigeodayo.ardrone.video.ImageListener;
-
-import SimpleOpenNI.SimpleOpenNI;
 import at.wisch.joystick.event.ControllerEventManager;
-import helpers.JoystickDataProvider;
 
-public class OpenFlexJavaContoller extends JFrame {
+public class OpenFlexJavaContoller extends PApplet {
 
+	// Physical Devices
+	
 //Joystick inputs
 	public static JoystickDataProvider _jsDataProvider;
 	
 // Ar Drone Controller
-	public static ARDrone _drone;
+	public static DroneController _drone;
 	public static boolean _is_flying;
-	private MyPanel myPanel;
 	
-// Kinect	
-	public static KinectData _kinectData	= new KinectData();
+// Kinect / DakaX	
+	public static PappletControler _appletControl; 
 	
-// DakaX
-	public static DakaXController _dakaX	= new DakaXController();
+	public static KinectData _kinect;
+	public static DakaXController _dakaX;
+	
 	
 /*
  * Physical Controller
@@ -107,116 +85,43 @@ public class OpenFlexJavaContoller extends JFrame {
 	 * @param arg
 	 */
 	public static void main(String[] arg){
+
+		final OpenFlexJavaContoller thisClass = new OpenFlexJavaContoller();
+		thisClass.setVisible(true);
 		
-		// starts Kinect
-		_kinectData.main(new String[] {"KinectData" });
+		// Controlldata Loop pulling Data every 100 ms to set NavigationCommand 
+		Timer timer = new Timer();
+		timer.scheduleAtFixedRate(new TimerTask() {
+	        public void run() {
+				thisClass.navigateByDirectControl( _jsDataProvider.getJsData() );
+	        }
+	    }, 0, 100);
 		
-		_dakaX.main(new String[] {"DakaXController"});
-		System.out.print("invokeSecond");
-		SwingUtilities.invokeLater(new Runnable(){
-			@Override
-			public void run() {
-				System.out.println("Preinit");
-				final OpenFlexJavaContoller thisClass = new OpenFlexJavaContoller();
-				
-				thisClass.addWindowListener(new WindowAdapter(){
-					@Override
-					public void windowOpened(WindowEvent e) {
-						System.out.println("WindowOpened");
-					}
-					@Override
-					public void windowClosing(WindowEvent e) {
-						//thisClass.dispose();
-					}
-				});
-				thisClass.setVisible(true);
-				
-				// Controlldata Loop pulling Data every 100 ms to set NavigationCommand 
-				Timer timer = new Timer();
-				timer.scheduleAtFixedRate(new TimerTask() {
-			        public void run() {
-						thisClass.navigateByDirectControl( _jsDataProvider.getJsData() );
-			        }
-			    }, 0, 100);
-				
-			}
-		});
 	};
 	
 	// Constructor
 	public OpenFlexJavaContoller(){
-		System.out.println("Controller");
 		this.initControllers();
 	}
 	
 	public void initControllers(){	
+
+	// starts Kinect & DakaX
+		_appletControl	= new PappletControler();
+		_appletControl.main( new String[]{"PappletControler"});
+		_kinect 		=  _appletControl._kinect;
+		_dakaX		    =  _appletControl._dakaX;
+		
+		
 	// Connecting to Joystick
 		_jsDataProvider 			= new JoystickDataProvider("");
 		ControllerEventManager.addControllerEventListener( _jsDataProvider );
-		
 	//connecting Drone
-		_drone 						= new ARDrone("192.168.1.1");
-		System.out.println("connect drone controller");
-		_drone.connect();
-		System.out.println("connect drone navdata");
-		_drone.connectNav();
-		System.out.println("connect drone video");
-		_drone.connectVideo();
-		System.out.println("start drone");
-		_drone.start();
-		
-		// Listeners for all available Data
-		_drone.addImageUpdateListener(new ImageListener(){
-			@Override
-			public void imageUpdated(BufferedImage image) {
-				if(myPanel!=null){
-					myPanel.setImage(image);
-					myPanel.repaint();
-				}
-			}
-		});
-		
-		_drone.addAttitudeUpdateListener(new AttitudeListener() {
-			@Override
-			public void attitudeUpdated(float pitch, float roll, float yaw, int altitude) {
-				//System.out.println("pitch: "+pitch+", roll: "+roll+", yaw: "+yaw+", altitude: "+altitude);
-			}
-		});
-		
-		_drone.addBatteryUpdateListener(new BatteryListener() {
-			@Override
-			public void batteryLevelChanged(int percentage) {
-				//System.out.println("battery: "+percentage+" %");
-			}
-		});
-				
-		_drone.addStateUpdateListener(new StateListener() {
-			@Override
-			public void stateChanged(DroneState state) {
-				//System.out.println("state: "+state.toString());
-			}
-		});
-		
-		_drone.addVelocityUpdateListener(new VelocityListener() {
-			@Override
-			public void velocityChanged(float vx, float vy, float vz) {
-				//System.out.println("vx: "+vx+", vy: "+vy+", vz: "+vz);
-			}
-		});
-
-		
-		System.out.print("Kinect init end");
-		
-		// Window for Video
-		this.setTitle("ardrone");
-		this.setSize(640, 480);
-		this.add(getMyPanel());
+		_drone 						= new DroneController("192.168.1.1", _appletControl);
 	}
-	
-	
-	
+
 	static void navigateByDirectControl(float[] jsData){
-		float factor	= 50;
+		float factor	= 20;
 		
 		
 		if(_is_flying){
@@ -285,7 +190,7 @@ public class OpenFlexJavaContoller extends JFrame {
 				_drone.stop();
 			}
 		}// end of just while flying
-		
+	
 		// start on btn 0
 		if( jsData[18] > 0 ){
 			if(!_is_flying){
@@ -302,38 +207,5 @@ public class OpenFlexJavaContoller extends JFrame {
 		}
 	}
 	
-	private JPanel getMyPanel(){
-		if(myPanel==null){
-			myPanel=new MyPanel();
-		}
-		return myPanel;
-	}
-	
-	/**
-	 * •`‰æ—p‚Ìƒpƒlƒ‹
-	 * @author shigeo
-	 *
-	 */
-	private class MyPanel extends JPanel{
-		private static final long serialVersionUID = -7635284252404123776L;
 
-		/** ardrone video image */
-		private BufferedImage image=null;
-		
-		public void setImage(BufferedImage image){
-			// Brighten the image by 30%
-			float scaleFactor = 1.3f;
-			RescaleOp op = new RescaleOp(scaleFactor, 0, null);
-			image = op.filter(image, null);
-			this.image=image;
-		}
-		
-		public void paint(Graphics g){
-			g.setColor(Color.white);
-			g.fillRect(0, 0, this.getWidth(), this.getHeight());
-			if(image!=null)
-				g.drawImage(image, 0, 0,640,480,null); //image.getWidth(), image.getHeight(), null);
-			
-		}
-	}
 }
