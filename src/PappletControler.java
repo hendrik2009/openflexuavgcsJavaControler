@@ -9,6 +9,8 @@ public class PappletControler extends PApplet {
 	public KinectData _kinect;
 	public DakaXController _dakaX;
 	
+	public boolean _kinectActive 	= false;
+	
 	public static PImage		_liveStream;
 	
 	//Scene parameter
@@ -22,7 +24,7 @@ public class PappletControler extends PApplet {
 		
 	public void setup(){
 		
-		this.frameRate(25);
+		this.frameRate(60);
 		 
 		this.size(800,600,P3D);
 		
@@ -40,9 +42,10 @@ public class PappletControler extends PApplet {
 		
 		SimpleOpenNI.start();
 		
-		_kinect 		= new KinectData(this,2);
-		this.add(_kinect);
-		
+		if(_kinectActive){
+			_kinect 		= new KinectData(this,2);
+			this.add(_kinect);
+		}
 	}
 	public void draw(){
 		
@@ -51,18 +54,21 @@ public class PappletControler extends PApplet {
 		
 		_dakaX.draw();
 		
-		pushMatrix();	//----------- PUSH MAT
+		if(_kinectActive){
+			pushMatrix();	//----------- PUSH MAT
 		  
-		  translate(width/2, height/2, - _kinect.DISTANCE/2);
-
-		  rotateX(_rotX);
-		  rotateY(_rotY);
-		  scale((float)_zoomF);
+			translate(width/2, height/2, - 1500);
+		  
+			rotateX(_rotX);
+			rotateY(_rotY);
+		  
+			scale((float)_zoomF);
 		
-		  _kinect.draw();
+			_kinect.draw();
 
 		
-		popMatrix();	//----------- POP MAT
+			popMatrix();	//----------- POP MAT
+		}
 		
 		// Drone Image 
 		this.image(_liveStream,240,240);
