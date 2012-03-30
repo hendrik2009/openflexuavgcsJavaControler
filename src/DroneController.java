@@ -1,3 +1,4 @@
+
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
@@ -21,13 +22,14 @@ public class DroneController extends ARDrone {
 private PappletControler _display;
 	
 	private PImage _myImg	= new PImage();	
+	public boolean is_flying = false;
 
 	public DroneController(String ip,PappletControler display){
 		super(ip);
 
 		_display = display;
 		
-		
+		/*
 		System.out.println("connect drone controller");
 		this.connect();
 		System.out.println("connect drone navdata");
@@ -36,7 +38,7 @@ private PappletControler _display;
 		this.connectVideo();
 		System.out.println("start drone");
 		this.start();
-		
+		*/
 		// Listeners for all available Data
 		this.addImageUpdateListener(new ImageListener(){
 			@Override
@@ -85,6 +87,18 @@ private PappletControler _display;
 				//System.out.println("vx: "+vx+", vy: "+vy+", vz: "+vz);
 			}
 		});
+	}
+	@Override
+	public void takeOff() {
+		if(this.manager!=null)
+			this.manager.takeOff();
+		is_flying = true;
+	}
+	@Override
+	public void landing() {
+		if(this.manager!=null)
+			this.manager.landing();
+		is_flying = false;
 	}
 	
 }

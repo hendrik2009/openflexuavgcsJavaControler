@@ -1,7 +1,8 @@
-import helpers.JoystickDataProvider;
+import helper.JoystickDataProvider;
 
 import java.util.Timer;
 import java.util.TimerTask;
+
 
 import processing.core.PApplet;
 import at.wisch.joystick.event.ControllerEventManager;
@@ -16,6 +17,7 @@ public class OpenFlexJavaContoller extends PApplet {
 // Ar Drone Controller
 	public static DroneController _drone;
 	public static boolean _is_flying;
+	public static MovementController _mover;
 	
 // Kinect / DakaX	
 	public static PappletControler _appletControl; 
@@ -93,7 +95,7 @@ public class OpenFlexJavaContoller extends PApplet {
 		Timer timer = new Timer();
 		timer.scheduleAtFixedRate(new TimerTask() {
 	        public void run() {
-				thisClass.navigateByDirectControl( _jsDataProvider.getJsData() );
+				thisClass.navigate( _jsDataProvider.getJsData() );
 	        }
 	    }, 0, 100);
 		
@@ -118,93 +120,12 @@ public class OpenFlexJavaContoller extends PApplet {
 		ControllerEventManager.addControllerEventListener( _jsDataProvider );
 	//connecting Drone
 		_drone 						= new DroneController("192.168.1.1", _appletControl);
+	//
+		_mover 						= new MovementController(_drone);
 	}
 
-	static void navigateByDirectControl(float[] jsData){
-		float factor	= 20;
-		
-		
-		if(_is_flying){
-			float vX 	= 0;	// Left right
-			float vY 	= 0;	// Forward Backward
-			float vZ 	= 0;	// Up Down
-			float dPhi 	= 0;
-			
-			boolean move 	= false;
-			
-			// Axis Controlles
-			
-			// Left right on x-axis
-			if( jsData[0] > 0.04){
-				System.out.println("rightStrave");
-				vX = jsData[0];
-				move =true;
-			}
-			else if( jsData[0] < -0.04){
-				System.out.println("leftStrave");
-				vX = jsData[0];
-				move =true;
-			}
-			
-			// For- Back -wards on y-axis
-			if( jsData[1] > 0){
-				System.out.println("BACK");
-				vY = jsData[1];
-				move =true;
-			}
-			else if( jsData[1] < 0){
-				System.out.println("FORWARD");
-				vY = jsData[1];
-				move =true;
-			}
-			
-			// Lateral rotation
-			if( jsData[2] > 0){
-				System.out.println("TurnR");
-				dPhi = jsData[2];
-				move =true;
-			}
-			else if( jsData[2] < 0){
-				System.out.println("TurnL");
-				dPhi = jsData[2];
-				move =true;
-			}
-			
-			// Vertical speed
-			if( jsData[3] > 0){
-				System.out.println("AltUP");
-				vZ = jsData[3];
-				move =true;
-			}
-			else if( jsData[3] < 0){
-				System.out.println("AltDown");
-				vZ = jsData[3];
-				move =true;
-			}
-			
-			if(move){
-				System.out.println("MOVE!!!!");
-				_drone.move3D( (int)(-vY*factor)  , (int)(-vX*factor), (int)(vZ*factor), (int)(-dPhi*factor));
-			}
-			else{
-				_drone.stop();
-			}
-		}// end of just while flying
-	
-		// start on btn 0
-		if( jsData[18] > 0 ){
-			if(!_is_flying){
-				System.out.println("TakeOFF");
-				_is_flying		= true;
-				_drone.takeOff();
-			}
-		}
-		// land on btn 1
-		if( jsData[19] > 0 ){
-			System.out.println("land");
-			_is_flying		= false;
-			_drone.landing();
-		}
+	static void navigate(float[] jsData){
+		_mover.invokeMove(jsData, MovementController.SW);
 	}
 	
 

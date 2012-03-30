@@ -42,16 +42,16 @@ public class ARDrone implements ARDroneInterface{
 	private InetAddress inetaddr=null;
 
 	//managers
-	private CommandManager manager=null;
-	private VideoManager videoManager=null;
-	private NavDataManager navdataManager=null;
+	protected CommandManager manager=null;
+	protected VideoManager videoManager=null;
+	protected NavDataManager navdataManager=null;
 
 	//listeners
-	private ImageListener imageListener=null;
-	private AttitudeListener attitudeListener=null;
-	private BatteryListener batteryListener=null;
-	private StateListener stateListener=null;
-	private VelocityListener velocityListener=null;
+	protected ImageListener imageListener=null;
+	protected AttitudeListener attitudeListener=null;
+	protected BatteryListener batteryListener=null;
+	protected StateListener stateListener=null;
+	protected VelocityListener velocityListener=null;
 
 	/** constructor */
 	public ARDrone(){
@@ -337,9 +337,22 @@ public class ARDrone implements ARDroneInterface{
 	}
 
 	@Override
-	public void move3D(int speedX, int speedY, int speedZ, int speedSpin) {
+	public void move3D(float speedX, float speedY, float speedZ, float speedSpin) {
+		System.out.print("Drone - MOVE v: ");
+		System.out.print("\t x:");
+		System.out.print(speedX);
+		System.out.print("\t y:");
+		System.out.print(speedY);
+		System.out.print("\t z:");
+		System.out.print(speedZ);
+		System.out.print("\t rot:");
+		System.out.println(speedSpin);
+///..-----
+	/*	
 		if(manager!=null)
 			manager.move3D(speedX, speedY, speedZ, speedSpin);
+			*/
+//---
 	}
 
 	//update listeners

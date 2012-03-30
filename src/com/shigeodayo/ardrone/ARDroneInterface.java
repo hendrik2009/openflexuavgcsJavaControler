@@ -65,5 +65,5 @@ public interface ARDroneInterface {
 	public void setMaxAltitude(int altitude);
 	public void setMinAltitude(int altitude);
 	
-	public void move3D(int speedX, int speedY, int speedZ, int speedSpin);
+	public void move3D(float speedX, float speedY, float speedZ, float speedSpin);
 }

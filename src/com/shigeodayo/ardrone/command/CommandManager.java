@@ -267,21 +267,21 @@ public class CommandManager extends AbstractManager{
 	/*
 	 * Thanks, Tarquínio.
 	 */
-	public void move3D(int speedX, int speedY, int speedZ, int speedSpin) {
-		if(speedX>100)
-			speedX=100;
-		else if(speedX<-100)
-			speedX=-100;
-		if(speedY>100)
-			speedY=100;
-		else if(speedY<-100)
-			speedY=-100;
-		if(speedZ>100)
-			speedZ=100;
-		else if(speedZ<-100)
-			speedZ=-100;
+	public void move3D(float speedX, float speedY, float speedZ, float speedSpin) {
+		if(speedX>1f)
+			speedX=1f;
+		else if(speedX<-1f)
+			speedX=-1f;
+		if(speedY>1f)
+			speedY=1f;
+		else if(speedY<-1f)
+			speedY=-1f;
+		if(speedZ>1f)
+			speedZ=1f;
+		else if(speedZ<-1f)
+			speedZ=-1f;
 		
-		command="AT*PCMD="+(seq++)+",1,"+intOfFloat(-speedY/100.0f)+","+intOfFloat(-speedX/100.0f)+","+intOfFloat(-speedZ/100.0f)+","+intOfFloat(-speedSpin/100.0f)+"\r"+"AT*REF="+(seq++)+",290718208";
+		command="AT*PCMD="+(seq++)+",1,"+-speedY+","+-speedX+","+-speedZ+","+-speedSpin+"\r"+"AT*REF="+(seq++)+",290718208";
 		continuance=true;
 	}
 	
